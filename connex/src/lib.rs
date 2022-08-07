@@ -103,6 +103,8 @@ impl Block {
         }
     }
 
+    // TODO: Shuffle
+
     /// Get result of turn this block clockwise.
     pub fn turn(&self) -> Self {
         match self {

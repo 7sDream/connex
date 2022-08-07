@@ -1,5 +1,5 @@
 [package]
-name = "connex-cli"
+name = "connex-tui"
 version = "0.1.0"
 edition = "2021"
 

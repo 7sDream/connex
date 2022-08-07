@@ -1,6 +1,6 @@
-// #![warn(clippy::all)]
-// #![warn(missing_debug_implementations)]
-// #![deny(warnings)]
+#![warn(clippy::all)]
+#![warn(missing_debug_implementations)]
+#![deny(warnings)]
 #![forbid(unsafe_code)]
 
 mod app;

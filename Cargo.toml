@@ -1,6 +1,6 @@
 [workspace]
 members = [
     "connex",
-    "connex-cli"
+    "connex-tui"
 ]
-default-members = ["connex-cli"]
+default-members = ["connex-tui"]

@@ -94,7 +94,7 @@ impl State {
         if solved {
             title_color = title_color.fg(Color::Green);
         }
-        let title = Paragraph::new(Span::styled("Connex", title_color))
+        let title = Paragraph::new(Span::styled("Connex TUI", title_color))
             .alignment(Alignment::Center)
             .block(Block::default().borders(Borders::ALL));
         f.render_widget(title, chunks[0]);
