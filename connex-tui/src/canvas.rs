@@ -31,14 +31,14 @@ fn lcm(a: u64, b: u64) -> u64 {
 
 fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
     let rect_w = rect.width as u64 * 2;
-    let rect_h = rect.height as u64 * 3;
+    let rect_h = rect.height as u64 * 4;
 
     let radio_w = rect_w as f64 / canvas.width() as f64;
     let radio_h = rect_h as f64 / canvas.height() as f64;
 
     let mut info = LayoutInfo::default();
 
-    info.point_size = lcm(lcm(rect_w, rect_h), 2);
+    info.point_size = lcm(rect_w, rect_h);
     info.block_size = 4 * info.point_size;
 
     if radio_w > radio_h {
