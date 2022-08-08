@@ -138,7 +138,7 @@ impl<'a, 'b> BlockPainter<'a, 'b> {
             let x2 = (x_offset + *to_x as u64 * self.layout.point_size) as f64;
             let y2 = (self.layout.y_bound - y_offset - *to_y as u64 * self.layout.point_size) as f64;
 
-            ctx.draw(&Line { x1, y1, x2, y2, color: if highlight { Color::Green } else { Color::Black } })
+            ctx.draw(&Line { x1, y1, x2, y2, color: if highlight { Color::Green } else { Color::Reset } })
         }
     }
 }
