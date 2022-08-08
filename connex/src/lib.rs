@@ -9,7 +9,12 @@
 //! Basic library for connex gameplay logic.
 
 extern crate alloc;
-use alloc::vec::Vec;
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec::Vec,
+};
+use core::str::FromStr;
 
 /// Block sides.
 /// It has different meaning when placed in different type of [`Block`]
@@ -86,6 +91,32 @@ pub enum Block {
     Cross,
 }
 
+impl FromStr for Block {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            " " => Ok(Self::Empty),
+            "^" => Ok(Self::Endpoint(Side::Up)),
+            ">" => Ok(Self::Endpoint(Side::Right)),
+            "v" => Ok(Self::Endpoint(Side::Down)),
+            "<" => Ok(Self::Endpoint(Side::Left)),
+            "/" => Ok(Self::Through(Side::Up)),
+            "-" => Ok(Self::Through(Side::Left)),
+            "7" => Ok(Self::Turn(Side::Right)),
+            "9" => Ok(Self::Turn(Side::Down)),
+            "3" => Ok(Self::Turn(Side::Left)),
+            "1" => Ok(Self::Turn(Side::Up)),
+            "8" => Ok(Self::Fork(Side::Up)),
+            "6" => Ok(Self::Fork(Side::Right)),
+            "2" => Ok(Self::Fork(Side::Down)),
+            "4" => Ok(Self::Fork(Side::Left)),
+            "+" => Ok(Self::Cross),
+            _ => Err(()),
+        }
+    }
+}
+
 impl Block {
     /// Create a random block.
     #[cfg(feature = "random")]
@@ -103,7 +134,17 @@ impl Block {
         }
     }
 
-    // TODO: Shuffle
+    /// Shuffle self, make side random.
+    #[cfg(feature = "random")]
+    pub fn shuffle<R: rand::Rng>(&mut self, mut r: R) {
+        match self {
+            Self::Endpoint(s) => *s = Side::random(&mut r),
+            Self::Through(s) => *s = Side::random(&mut r),
+            Self::Turn(s) => *s = Side::random(&mut r),
+            Self::Fork(s) => *s = Side::random(&mut r),
+            _ => (),
+        }
+    }
 
     /// Get result of turn this block clockwise.
     pub fn turn(&self) -> Self {
@@ -154,6 +195,49 @@ pub struct World {
     blocks: Vec<Block>,
 }
 
+impl FromStr for World {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut lines = s.lines();
+
+        let first_line = lines.next().ok_or("missing size line")?;
+
+        let mut hw = first_line.split(',');
+        let height = hw.next().ok_or("can't get height of world")?.parse::<usize>().map_err(|e| e.to_string())?;
+        let width = hw.next().ok_or("can't get width of world")?.parse::<usize>().map_err(|e| e.to_string())?;
+
+        if height == 0 {
+            return Err("canvas height must not zero".to_string());
+        }
+
+        if width == 0 {
+            return Err("canvas width must not zero".to_string());
+        }
+
+        let size = height.checked_mul(width).ok_or("too many blocks")?;
+
+        let mut blocks = Vec::new();
+
+        for line in lines {
+            for (i, part) in line.char_indices() {
+                let block = line
+                    .get(i..i + part.len_utf8())
+                    .unwrap()
+                    .parse()
+                    .map_err(|_| format!("invalid block char: {part}"))?;
+                blocks.push(block);
+            }
+        }
+
+        if blocks.len() != size {
+            return Err("blocks count not match".to_string());
+        }
+
+        Ok(Self { width, height, blocks })
+    }
+}
+
 impl World {
     /// Create a all empty canvas in given size.
     pub fn empty(height: usize, width: usize) -> Self {
@@ -168,6 +252,7 @@ impl World {
     {
         assert!(height > 0, "canvas height must not zero");
         assert!(width > 0, "canvas width must not zero");
+        assert!(height.checked_mul(width).is_some(), "too many blocks");
 
         let size = height * width;
         let mut cells = Vec::with_capacity(size);
@@ -180,6 +265,14 @@ impl World {
         });
 
         Self { width, height, blocks: cells }
+    }
+
+    /// Shuffle all blocks.
+    #[cfg(feature = "random")]
+    pub fn shuffle<R: rand::Rng>(&mut self, mut r: R) {
+        for block in &mut self.blocks {
+            block.shuffle(&mut r);
+        }
     }
 
     /// Get height of canvas.

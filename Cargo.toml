@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "connex",
-    "connex-tui"
+    "connex-levels",
+    "connex-tui",
 ]
 default-members = ["connex-tui"]

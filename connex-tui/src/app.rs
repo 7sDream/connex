@@ -10,11 +10,11 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style},
     text::Span,
-    widgets::{canvas::Canvas, Block, Borders, Paragraph},
+    widgets::{canvas::Canvas, Block as TuiBlock, Borders, Paragraph},
     Frame, Terminal,
 };
 
-use connex::{Block as Blk, Side, World};
+use connex::World;
 
 const TICK_RATE: Duration = std::time::Duration::from_millis(20);
 
@@ -28,52 +28,20 @@ impl State {
     pub fn new() -> Self {
         let mut r = thread_rng();
 
-        let mut world = connex::World::empty(6, 4);
+        let mut world: World = connex_levels::LEVELS[0].parse().unwrap();
 
-        *world.get_mut(0, 0).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(0, 1).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(0, 2).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(0, 3).unwrap() = Blk::Turn(Side::random(&mut r));
-
-        *world.get_mut(1, 0).unwrap() = Blk::Through(Side::random(&mut r));
-        *world.get_mut(1, 1).unwrap() = Blk::Fork(Side::random(&mut r));
-        *world.get_mut(1, 2).unwrap() = Blk::Fork(Side::random(&mut r));
-        *world.get_mut(1, 3).unwrap() = Blk::Endpoint(Side::random(&mut r));
-
-        *world.get_mut(2, 0).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(2, 1).unwrap() = Blk::Fork(Side::random(&mut r));
-        *world.get_mut(2, 2).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(2, 3).unwrap() = Blk::Turn(Side::random(&mut r));
-
-        *world.get_mut(3, 0).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(3, 1).unwrap() = Blk::Cross;
-        *world.get_mut(3, 2).unwrap() = Blk::Fork(Side::random(&mut r));
-        *world.get_mut(3, 3).unwrap() = Blk::Fork(Side::random(&mut r));
-
-        *world.get_mut(4, 0).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(4, 1).unwrap() = Blk::Fork(Side::random(&mut r));
-        *world.get_mut(4, 2).unwrap() = Blk::Through(Side::random(&mut r));
-        *world.get_mut(4, 3).unwrap() = Blk::Endpoint(Side::random(&mut r));
-
-        *world.get_mut(5, 0).unwrap() = Blk::Endpoint(Side::random(&mut r));
-        *world.get_mut(5, 1).unwrap() = Blk::Turn(Side::random(&mut r));
-        *world.get_mut(5, 2).unwrap() = Blk::Endpoint(Side::random(&mut r));
-        *world.get_mut(5, 3).unwrap() = Blk::Empty;
+        world.shuffle(&mut r);
 
         State { col: 0, row: 0, world }
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
         match key.code {
-            KeyCode::Char('q') => return false,
-            KeyCode::Char('k' | 'w') | KeyCode::Up => {
-                self.row = (self.row + self.world.height() - 1) % self.world.height()
-            }
-            KeyCode::Char('l' | 'd') | KeyCode::Right => self.col = (self.col + 1) % self.world.width(),
-            KeyCode::Char('j' | 's') | KeyCode::Down => self.row = (self.row + 1) % self.world.height(),
-            KeyCode::Char('h' | 'a') | KeyCode::Left => {
-                self.col = (self.col + self.world.width() - 1) % self.world.width()
-            }
+            KeyCode::Char('q') | KeyCode::Esc => return false,
+            KeyCode::Char('k' | 'w') | KeyCode::Up if self.row > 0 => self.row -= 1,
+            KeyCode::Char('l' | 'd') | KeyCode::Right if self.col < self.world.width() - 1 => self.col += 1,
+            KeyCode::Char('j' | 's') | KeyCode::Down if self.row < self.world.height() - 1 => self.row += 1,
+            KeyCode::Char('h' | 'a') | KeyCode::Left if self.col > 0 => self.col -= 1,
             KeyCode::Char(' ') | KeyCode::Enter => self.world.get_mut(self.row, self.col).unwrap().turn_me(),
             _ => (),
         };
@@ -96,12 +64,12 @@ impl State {
         }
         let title = Paragraph::new(Span::styled("Connex TUI", title_color))
             .alignment(Alignment::Center)
-            .block(Block::default().borders(Borders::ALL));
+            .block(TuiBlock::default().borders(Borders::ALL));
         f.render_widget(title, chunks[0]);
 
         let canvas_painter = crate::canvas::Painter::new(&self.world, &chunks[1]);
         let canvas = Canvas::default()
-            .block(Block::default().borders(Borders::NONE))
+            .block(TuiBlock::default().borders(Borders::NONE))
             .paint(|ctx| canvas_painter.draw(ctx, |i, j| solved || i == self.row && j == self.col))
             .x_bounds(canvas_painter.x_bound())
             .y_bounds(canvas_painter.y_bound());

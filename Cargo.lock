@@ -34,10 +34,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "connex-levels"
+version = "0.1.0"
+dependencies = [
+ "connex",
+]
+
+[[package]]
 name = "connex-tui"
 version = "0.1.0"
 dependencies = [
  "connex",
+ "connex-levels",
  "crossterm",
  "rand",
  "tui",
