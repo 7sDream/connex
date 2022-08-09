@@ -19,6 +19,7 @@ use connex::World;
 const TICK_RATE: Duration = std::time::Duration::from_millis(20);
 
 pub struct State {
+    solved: bool,
     col: usize,
     row: usize,
     world: World,
@@ -26,23 +27,36 @@ pub struct State {
 
 impl State {
     pub fn new() -> Self {
-        let mut r = thread_rng();
-
         let mut world: World = connex_levels::LEVELS[0].parse().unwrap();
 
-        world.shuffle(&mut r);
+        world.shuffle(thread_rng());
 
-        State { col: 0, row: 0, world }
+        State {
+            solved: false,
+            col: 0,
+            row: 0,
+            world,
+        }
     }
 
     pub fn on_key(&mut self, key: KeyEvent) -> bool {
+        if !self.solved {
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => return false,
+                KeyCode::Char('k' | 'w') | KeyCode::Up if self.row > 0 => self.row -= 1,
+                KeyCode::Char('l' | 'd') | KeyCode::Right if self.col < self.world.width() - 1 => self.col += 1,
+                KeyCode::Char('j' | 's') | KeyCode::Down if self.row < self.world.height() - 1 => self.row += 1,
+                KeyCode::Char('h' | 'a') | KeyCode::Left if self.col > 0 => self.col -= 1,
+                KeyCode::Char(' ') | KeyCode::Enter => {
+                    self.world.get_mut(self.row, self.col).unwrap().turn_me();
+                    self.solved = self.world.check();
+                }
+                _ => (),
+            };
+        }
+
         match key.code {
             KeyCode::Char('q') | KeyCode::Esc => return false,
-            KeyCode::Char('k' | 'w') | KeyCode::Up if self.row > 0 => self.row -= 1,
-            KeyCode::Char('l' | 'd') | KeyCode::Right if self.col < self.world.width() - 1 => self.col += 1,
-            KeyCode::Char('j' | 's') | KeyCode::Down if self.row < self.world.height() - 1 => self.row += 1,
-            KeyCode::Char('h' | 'a') | KeyCode::Left if self.col > 0 => self.col -= 1,
-            KeyCode::Char(' ') | KeyCode::Enter => self.world.get_mut(self.row, self.col).unwrap().turn_me(),
             _ => (),
         };
 
@@ -57,9 +71,8 @@ impl State {
             .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
             .split(f.size());
 
-        let solved = self.world.check();
         let mut title_color = Style::default();
-        if solved {
+        if self.solved {
             title_color = title_color.fg(Color::Green);
         }
         let title = Paragraph::new(Span::styled("Connex TUI", title_color))
@@ -70,7 +83,13 @@ impl State {
         let canvas_painter = crate::canvas::Painter::new(&self.world, &chunks[1]);
         let canvas = Canvas::default()
             .block(TuiBlock::default().borders(Borders::NONE))
-            .paint(|ctx| canvas_painter.draw(ctx, |i, j| solved || i == self.row && j == self.col))
+            .paint(|ctx| {
+                canvas_painter.draw(
+                    ctx,
+                    |i, j| self.solved || i == self.row && j == self.col, // line highlight
+                    |i, j| !self.solved && i == self.row && j == self.col, // need boundary
+                )
+            })
             .x_bounds(canvas_painter.x_bound())
             .y_bounds(canvas_painter.y_bound());
         f.render_widget(canvas, chunks[1]);

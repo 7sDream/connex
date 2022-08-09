@@ -58,35 +58,47 @@ fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
 
 type BlockLine = ((u8, u8), (u8, u8));
 
-const BL_UP: BlockLine = ((0, 2), (1, 2));
-const BL_RIGHT: BlockLine = ((2, 3), (2, 4));
-const BL_DOWN: BlockLine = ((3, 2), (4, 2));
-const BL_LEFT: BlockLine = ((2, 0), (2, 1));
-const BL_LEFT_UP: BlockLine = ((1, 2), (2, 1));
-const BL_RIGHT_UP: BlockLine = ((2, 3), (1, 2));
-const BL_RIGHT_DOWN: BlockLine = ((3, 2), (2, 3));
-const BL_LEFT_DOWN: BlockLine = ((2, 1), (3, 2));
+const BL_EP_UP: BlockLine = ((0, 2), (1, 2));
+const BL_EP_RIGHT: BlockLine = ((2, 3), (2, 4));
+const BL_EP_DOWN: BlockLine = ((3, 2), (4, 2));
+const BL_EP_LEFT: BlockLine = ((2, 0), (2, 1));
+const BL_TURN_LEFT_UP: BlockLine = ((1, 2), (2, 1));
+const BL_TURN_RIGHT_UP: BlockLine = ((2, 3), (1, 2));
+const BL_TURN_RIGHT_DOWN: BlockLine = ((3, 2), (2, 3));
+const BL_TURN_LEFT_DOWN: BlockLine = ((2, 1), (3, 2));
 
-const BL_CENTER_ALL: &[BlockLine] = &[BL_LEFT_UP, BL_RIGHT_UP, BL_RIGHT_DOWN, BL_LEFT_DOWN];
-const BL_AROUND_ALL: &[BlockLine] = &[BL_UP, BL_RIGHT, BL_DOWN, BL_LEFT];
+const BL_TURN_ALL: &[BlockLine] = &[BL_TURN_LEFT_UP, BL_TURN_RIGHT_UP, BL_TURN_RIGHT_DOWN, BL_TURN_LEFT_DOWN];
+const BL_EP_ALL: &[BlockLine] = &[BL_EP_UP, BL_EP_RIGHT, BL_EP_DOWN, BL_EP_LEFT];
 
-const BL_UP_DOWN: BlockLine = ((0, 2), (4, 2));
-const BL_LEFT_RIGHT: BlockLine = ((2, 0), (2, 4));
+const BL_THROUGH_UP_DOWN: BlockLine = ((0, 2), (4, 2));
+const BL_THROUGH_LEFT_RIGHT: BlockLine = ((2, 0), (2, 4));
 
-const BL_LEFT_UP_ARC: &[BlockLine] = &[BL_LEFT, BL_UP, BL_LEFT_UP];
-const BL_RIGHT_UP_ARC: &[BlockLine] = &[BL_RIGHT, BL_UP, BL_RIGHT_UP];
-const BL_RIGHT_DOWN_ARC: &[BlockLine] = &[BL_RIGHT, BL_DOWN, BL_RIGHT_DOWN];
-const BL_LEFT_DOWN_ARC: &[BlockLine] = &[BL_LEFT, BL_DOWN, BL_LEFT_DOWN];
+const BL_LEFT_UP_ARC: &[BlockLine] = &[BL_EP_LEFT, BL_EP_UP, BL_TURN_LEFT_UP];
+const BL_RIGHT_UP_ARC: &[BlockLine] = &[BL_EP_RIGHT, BL_EP_UP, BL_TURN_RIGHT_UP];
+const BL_RIGHT_DOWN_ARC: &[BlockLine] = &[BL_EP_RIGHT, BL_EP_DOWN, BL_TURN_RIGHT_DOWN];
+const BL_LEFT_DOWN_ARC: &[BlockLine] = &[BL_EP_LEFT, BL_EP_DOWN, BL_TURN_LEFT_DOWN];
 
-const BL_UP_FORK: &[BlockLine] = &[BL_RIGHT, BL_RIGHT_DOWN, BL_DOWN, BL_LEFT_DOWN, BL_LEFT];
-const BL_RIGHT_FORK: &[BlockLine] = &[BL_UP, BL_LEFT_UP, BL_LEFT, BL_LEFT_DOWN, BL_DOWN];
-const BL_DOWN_FORK: &[BlockLine] = &[BL_LEFT, BL_LEFT_UP, BL_UP, BL_RIGHT_UP, BL_RIGHT];
-const BL_LEFT_FORK: &[BlockLine] = &[BL_UP, BL_RIGHT_UP, BL_RIGHT, BL_RIGHT_DOWN, BL_DOWN];
+const BL_UP_FORK: &[BlockLine] = &[
+    BL_EP_RIGHT,
+    BL_TURN_RIGHT_DOWN,
+    BL_EP_DOWN,
+    BL_TURN_LEFT_DOWN,
+    BL_EP_LEFT,
+];
+const BL_RIGHT_FORK: &[BlockLine] = &[BL_EP_UP, BL_TURN_LEFT_UP, BL_EP_LEFT, BL_TURN_LEFT_DOWN, BL_EP_DOWN];
+const BL_DOWN_FORK: &[BlockLine] = &[BL_EP_LEFT, BL_TURN_LEFT_UP, BL_EP_UP, BL_TURN_RIGHT_UP, BL_EP_RIGHT];
+const BL_LEFT_FORK: &[BlockLine] = &[BL_EP_UP, BL_TURN_RIGHT_UP, BL_EP_RIGHT, BL_TURN_RIGHT_DOWN, BL_EP_DOWN];
+
+const BL_BOUNDARY_UP: BlockLine = ((0, 0), (0, 4));
+const BL_BOUNDARY_RIGHT: BlockLine = ((0, 4), (4, 4));
+const BL_BOUNDARY_DOWN: BlockLine = ((4, 0), (4, 4));
+const BL_BOUNDARY_LEFT: BlockLine = ((0, 0), (4, 0));
+const BL_BOUNDARY: &[BlockLine] = &[BL_BOUNDARY_UP, BL_BOUNDARY_RIGHT, BL_BOUNDARY_DOWN, BL_BOUNDARY_LEFT];
 
 fn common_lines(block: &Block) -> &[&[BlockLine]] {
     match block {
-        Block::Endpoint(_) => &[BL_CENTER_ALL],
-        Block::Cross => &[BL_CENTER_ALL, BL_AROUND_ALL],
+        Block::Endpoint(_) => &[BL_TURN_ALL],
+        Block::Cross => &[BL_TURN_ALL, BL_EP_ALL],
         _ => &[],
     }
 }
@@ -95,13 +107,13 @@ fn side_lines(block: &Block) -> &[BlockLine] {
     match block {
         Block::Empty => &[],
         Block::Endpoint(s) => match s {
-            Side::Up => &[BL_UP],
-            Side::Right => &[BL_RIGHT],
-            Side::Down => &[BL_DOWN],
-            Side::Left => &[BL_LEFT],
+            Side::Up => &[BL_EP_UP],
+            Side::Right => &[BL_EP_RIGHT],
+            Side::Down => &[BL_EP_DOWN],
+            Side::Left => &[BL_EP_LEFT],
         },
-        Block::Through(Side::Up | Side::Down) => &[BL_UP_DOWN],
-        Block::Through(Side::Left | Side::Right) => &[BL_LEFT_RIGHT],
+        Block::Through(Side::Up | Side::Down) => &[BL_THROUGH_UP_DOWN],
+        Block::Through(Side::Left | Side::Right) => &[BL_THROUGH_LEFT_RIGHT],
         Block::Turn(s) => match s {
             Side::Up => BL_RIGHT_UP_ARC,
             Side::Right => BL_RIGHT_DOWN_ARC,
@@ -125,20 +137,37 @@ struct BlockPainter<'a, 'b> {
 }
 
 impl<'a, 'b> BlockPainter<'a, 'b> {
-    pub fn draw(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool) {
+    fn create_line(&self, x_offset: u64, y_offset: u64, point: &BlockLine, color: Color) -> Line {
+        let ((from_y, from_x), (to_y, to_x)) = point;
+
+        let x1 = (x_offset + *from_x as u64 * self.layout.point_size) as f64;
+        let y1 = (self.layout.y_bound - y_offset - *from_y as u64 * self.layout.point_size) as f64;
+        let x2 = (x_offset + *to_x as u64 * self.layout.point_size) as f64;
+        let y2 = (self.layout.y_bound - y_offset - *to_y as u64 * self.layout.point_size) as f64;
+
+        Line { x1, y1, x2, y2, color }
+    }
+
+    pub fn draw(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool, boundary: bool) {
         let x_offset = self.layout.x_offset + self.layout.block_size * col as u64;
         let y_offset = self.layout.y_offset + self.layout.block_size * row as u64;
         let block = self.canvas.get(row, col).unwrap();
 
-        let lines = common_lines(block).iter().flat_map(|a| a.iter()).chain(side_lines(block).iter());
+        let mut boundary_lines = BL_BOUNDARY;
+        if !boundary {
+            boundary_lines = &[];
+        }
 
-        for ((from_y, from_x), (to_y, to_x)) in lines {
-            let x1 = (x_offset + *from_x as u64 * self.layout.point_size) as f64;
-            let y1 = (self.layout.y_bound - y_offset - *from_y as u64 * self.layout.point_size) as f64;
-            let x2 = (x_offset + *to_x as u64 * self.layout.point_size) as f64;
-            let y2 = (self.layout.y_bound - y_offset - *to_y as u64 * self.layout.point_size) as f64;
+        let lines = common_lines(block)
+            .iter()
+            .flat_map(|a| a.iter())
+            .chain(side_lines(block).iter())
+            .chain(boundary_lines.iter());
 
-            ctx.draw(&Line { x1, y1, x2, y2, color: if highlight { Color::Green } else { Color::Reset } })
+        let color = if highlight { Color::Green } else { Color::Reset };
+
+        for point in lines {
+            ctx.draw(&self.create_line(x_offset, y_offset, point, color))
         }
     }
 }
@@ -163,15 +192,19 @@ impl<'a> Painter<'a> {
         [0.0, self.layout.y_bound as f64]
     }
 
-    pub fn draw<F>(&self, ctx: &mut Context, mut highlight_pred: F)
+    pub fn draw<F1, F2>(&self, ctx: &mut Context, mut highlight_pred: F1, mut boundary_pred: F2)
     where
-        F: FnMut(usize, usize) -> bool,
+        F1: FnMut(usize, usize) -> bool,
+        F2: FnMut(usize, usize) -> bool,
     {
-        let block_painter = BlockPainter { canvas: self.canvas, layout: &self.layout };
+        let block_painter = BlockPainter {
+            canvas: self.canvas,
+            layout: &self.layout,
+        };
 
         for i in 0..self.canvas.height() {
             for j in 0..self.canvas.width() {
-                block_painter.draw(ctx, i, j, highlight_pred(i, j))
+                block_painter.draw(ctx, i, j, highlight_pred(i, j), boundary_pred(i, j))
             }
         }
     }
