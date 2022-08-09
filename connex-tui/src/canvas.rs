@@ -4,7 +4,7 @@ use tui::{
     widgets::canvas::{Context, Line},
 };
 
-use connex::{Block, Side, World};
+use connex::{Block, Towards, World};
 
 #[derive(Default, Debug, Clone)]
 struct LayoutInfo {
@@ -30,6 +30,10 @@ fn lcm(a: u64, b: u64) -> u64 {
 }
 
 fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
+    if rect.area() == 0 {
+        return LayoutInfo::default();
+    }
+
     let rect_w = (rect.width as u64) * 2;
     let rect_h = (rect.height as u64) * 4;
 
@@ -42,14 +46,14 @@ fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
     info.block_size = 4 * info.point_size;
 
     if radio_w > radio_h {
-        info.y_bound = canvas.height() as u64 * info.block_size + info.point_size;
+        info.y_bound = canvas.height() as u64 * info.block_size + 2 * info.point_size;
         info.x_bound = info.y_bound * rect_w / rect_h;
-        info.y_offset = 0;
+        info.y_offset = info.point_size;
         info.x_offset = (info.x_bound - canvas.width() as u64 * info.block_size) / 2;
     } else {
-        info.x_bound = canvas.width() as u64 * info.block_size + info.point_size;
+        info.x_bound = canvas.width() as u64 * info.block_size + 2 * info.point_size;
         info.y_bound = info.x_bound * rect_h / rect_w;
-        info.x_offset = 0;
+        info.x_offset = info.point_size;
         info.y_offset = (info.y_bound - canvas.height() as u64 * info.block_size) / 2;
     }
 
@@ -107,24 +111,24 @@ fn side_lines(block: &Block) -> &[BlockLine] {
     match block {
         Block::Empty => &[],
         Block::Endpoint(s) => match s {
-            Side::Up => &[BL_EP_UP],
-            Side::Right => &[BL_EP_RIGHT],
-            Side::Down => &[BL_EP_DOWN],
-            Side::Left => &[BL_EP_LEFT],
+            Towards::Up => &[BL_EP_UP],
+            Towards::Right => &[BL_EP_RIGHT],
+            Towards::Down => &[BL_EP_DOWN],
+            Towards::Left => &[BL_EP_LEFT],
         },
-        Block::Through(Side::Up | Side::Down) => &[BL_THROUGH_UP_DOWN],
-        Block::Through(Side::Left | Side::Right) => &[BL_THROUGH_LEFT_RIGHT],
+        Block::Through(Towards::Up | Towards::Down) => &[BL_THROUGH_UP_DOWN],
+        Block::Through(Towards::Left | Towards::Right) => &[BL_THROUGH_LEFT_RIGHT],
         Block::Turn(s) => match s {
-            Side::Up => BL_RIGHT_UP_ARC,
-            Side::Right => BL_RIGHT_DOWN_ARC,
-            Side::Down => BL_LEFT_DOWN_ARC,
-            Side::Left => BL_LEFT_UP_ARC,
+            Towards::Up => BL_RIGHT_UP_ARC,
+            Towards::Right => BL_RIGHT_DOWN_ARC,
+            Towards::Down => BL_LEFT_DOWN_ARC,
+            Towards::Left => BL_LEFT_UP_ARC,
         },
         Block::Fork(s) => match s {
-            Side::Up => BL_UP_FORK,
-            Side::Right => BL_RIGHT_FORK,
-            Side::Down => BL_DOWN_FORK,
-            Side::Left => BL_LEFT_FORK,
+            Towards::Up => BL_UP_FORK,
+            Towards::Right => BL_RIGHT_FORK,
+            Towards::Down => BL_DOWN_FORK,
+            Towards::Left => BL_LEFT_FORK,
         },
         Block::Cross => &[],
     }
@@ -148,27 +152,32 @@ impl<'a, 'b> BlockPainter<'a, 'b> {
         Line { x1, y1, x2, y2, color }
     }
 
-    pub fn draw(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool, boundary: bool) {
+    fn draw<'i, I: IntoIterator<Item = &'i BlockLine>>(
+        &self, ctx: &mut Context, row: usize, col: usize, lines: I, highlight: bool,
+    ) {
         let x_offset = self.layout.x_offset + self.layout.block_size * col as u64;
         let y_offset = self.layout.y_offset + self.layout.block_size * row as u64;
-        let block = self.canvas.get(row, col).unwrap();
-
-        let mut boundary_lines = BL_BOUNDARY;
-        if !boundary {
-            boundary_lines = &[];
-        }
-
-        let lines = common_lines(block)
-            .iter()
-            .flat_map(|a| a.iter())
-            .chain(side_lines(block).iter())
-            .chain(boundary_lines.iter());
 
         let color = if highlight { Color::Green } else { Color::Reset };
 
         for point in lines {
             ctx.draw(&self.create_line(x_offset, y_offset, point, color))
         }
+    }
+
+    pub fn draw_inner(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool) {
+        let block = self.canvas.get(row, col).unwrap();
+
+        let lines = common_lines(block)
+            .iter()
+            .flat_map(|a| a.iter())
+            .chain(side_lines(block).iter());
+
+        self.draw(ctx, row, col, lines, highlight)
+    }
+
+    pub fn draw_boundary(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool) {
+        self.draw(ctx, row, col, BL_BOUNDARY, highlight)
     }
 }
 
@@ -202,9 +211,20 @@ impl<'a> Painter<'a> {
             layout: &self.layout,
         };
 
+        let mut boundary_position = Vec::new();
+
         for i in 0..self.canvas.height() {
             for j in 0..self.canvas.width() {
-                block_painter.draw(ctx, i, j, highlight_pred(i, j), boundary_pred(i, j))
+                block_painter.draw_inner(ctx, i, j, highlight_pred(i, j));
+                if boundary_pred(i, j) {
+                    boundary_position.push((i, j));
+                }
+            }
+        }
+
+        if !boundary_position.is_empty() {
+            for (row, col) in boundary_position {
+                block_painter.draw_boundary(ctx, row, col, true);
             }
         }
     }
