@@ -1,5 +1,8 @@
 use alloc::{format, string::String, vec::Vec};
-use core::str::FromStr;
+use core::{
+    fmt::{Debug, Display, Write},
+    str::FromStr,
+};
 
 use crate::{Block, Towards};
 
@@ -27,6 +30,12 @@ pub struct World {
     blocks: Vec<Block>,
 }
 
+impl Default for World {
+    fn default() -> Self {
+        World::empty(1, 1)
+    }
+}
+
 impl FromStr for World {
     type Err = String;
 
@@ -48,11 +57,11 @@ impl FromStr for World {
             .map_err(|e| format!("{}", e))?;
 
         if height == 0 {
-            return Err("canvas height must not zero".into());
+            return Err("world height must not zero".into());
         }
 
         if width == 0 {
-            return Err("canvas width must not zero".into());
+            return Err("world width must not zero".into());
         }
 
         let size = height.checked_mul(width).ok_or("too many blocks")?;
@@ -78,37 +87,60 @@ impl FromStr for World {
     }
 }
 
+impl Display for World {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("{},{}\n", self.height, self.width))?;
+        for row in 0..self.height {
+            for col in 0..self.width {
+                Display::fmt(self.get(row, col).unwrap(), f)?;
+            }
+            f.write_char('\n')?;
+        }
+
+        Ok(())
+    }
+}
+
 impl World {
-    /// Create a all empty canvas in given size.
+    /// Create a all empty world in given size.
     pub fn empty(height: usize, width: usize) -> Self {
         Self::new_with(height, width, |_, _| Block::Empty)
     }
 
-    /// Create a given size canvas using an init function, this function will be called in each block,
+    /// Create a given size world using an init function, this function will be called in each block,
     /// given argument of `row` and `col`, start from zero.
     pub fn new_with<F>(height: usize, width: usize, mut f: F) -> Self
     where
         F: FnMut(usize, usize) -> Block,
     {
-        assert!(height > 0, "canvas height must not zero");
-        assert!(width > 0, "canvas width must not zero");
-        assert!(height.checked_mul(width).is_some(), "too many blocks");
+        let size = height.checked_mul(width);
+        assert!(size.is_some(), "too many blocks");
+        let size = size.unwrap();
 
-        let size = height * width;
-        let mut cells = Vec::with_capacity(size);
+        let mut blocks = Vec::with_capacity(size);
 
         let mut cur = 0;
-        cells.resize_with(size, move || {
+        blocks.resize_with(size, move || {
             let cell = f(cur / width, cur % width);
             cur += 1;
             cell
         });
 
-        Self {
-            width,
-            height,
-            blocks: cells,
-        }
+        Self::new_from_blocks(height, width, blocks)
+    }
+
+    /// Create a given size world using given blocks. blocks' size must be equal to height * width.
+    pub fn new_from_blocks(height: usize, width: usize, blocks: Vec<Block>) -> Self {
+        assert!(height > 0, "world height must not zero");
+        assert!(width > 0, "world width must not zero");
+
+        let size = height.checked_mul(width);
+        assert!(size.is_some(), "too many blocks");
+        let size = size.unwrap();
+
+        assert!(size == blocks.len());
+
+        Self { height, width, blocks }
     }
 
     /// Shuffle all blocks.
@@ -119,12 +151,12 @@ impl World {
         }
     }
 
-    /// Get height of canvas.
+    /// Get height of world.
     pub fn height(&self) -> usize {
         self.height
     }
 
-    /// Get width of canvas.
+    /// Get width of world.
     pub fn width(&self) -> usize {
         self.width
     }
@@ -137,6 +169,11 @@ impl World {
     /// get a mutable block in given location, return None if out of range.
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut Block> {
         self.blocks.get_mut(row * self.width + col)
+    }
+
+    /// Get inner blocks.
+    pub fn into_inner(self) -> Vec<Block> {
+        self.blocks
     }
 
     /// Turn a block in given location.
@@ -180,8 +217,8 @@ impl World {
         true
     }
 
-    /// Check if this canvas is all fit.
-    pub fn check(&self) -> bool {
+    /// Check if this world's blocks is all fit.
+    pub fn solved(&self) -> bool {
         (0..self.height).all(|row| (0..self.width).all(|col| self.check_cell_with_right_down(row, col)))
     }
 }

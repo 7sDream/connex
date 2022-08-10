@@ -127,7 +127,7 @@ impl FromStr for Block {
             "6" => Ok(Self::Fork(Towards::Right)),
             "2" => Ok(Self::Fork(Towards::Down)),
             "4" => Ok(Self::Fork(Towards::Left)),
-            "+" => Ok(Self::Cross),
+            "5" => Ok(Self::Cross),
             _ => Err(()),
         }
     }
@@ -151,7 +151,7 @@ impl Display for Block {
             Self::Fork(Towards::Right) => '6',
             Self::Fork(Towards::Down) => '2',
             Self::Fork(Towards::Left) => '4',
-            Self::Cross => '+',
+            Self::Cross => '5',
         })
     }
 }
