@@ -14,18 +14,18 @@ use tui::{
 use connex::World;
 use connex_levels::LEVELS;
 
-use crate::{app::App, world::WorldWidget};
+use crate::{app::App, widget::Game as GameWidget};
 
 pub struct Game {
     level: Option<usize>,
-    world: WorldWidget,
+    game: GameWidget,
 }
 
 impl Default for Game {
     fn default() -> Self {
         let mut state = Game {
             level: None,
-            world: WorldWidget::default(),
+            game: GameWidget::default(),
         };
 
         if !LEVELS.is_empty() {
@@ -43,7 +43,7 @@ impl Game {
         let mut world: World = connex_levels::LEVELS[level].parse().unwrap();
         world.shuffle(thread_rng());
 
-        self.world.reset(world);
+        self.game.reset(world);
         self.level.replace(level);
     }
 }
@@ -53,8 +53,8 @@ impl App for Game {
 
     fn on_key(&mut self, key: KeyEvent) -> bool {
         if let Some(level) = self.level {
-            if !self.world.solved() {
-                self.world.on_key(key);
+            if !self.game.solved() {
+                self.game.on_key(key);
             }
 
             if let KeyCode::Char('r') = key.code {
@@ -86,7 +86,7 @@ impl App for Game {
 
         let title_rect = chunks[0];
         let mut title_color = Style::default();
-        if self.world.solved() {
+        if self.game.solved() {
             title_color = title_color.fg(Color::Green);
         }
         let title = if let Some(level) = self.level {
@@ -118,9 +118,9 @@ impl App for Game {
             .highlight_style(Style::default().fg(Color::Green));
         f.render_widget(level_widget, level_rect);
 
-        let canvas_rect = main_chunks[1];
-        if self.level.is_some() && canvas_rect.area() > 0 {
-            f.render_widget(&self.world, canvas_rect);
+        let game_rect = main_chunks[1];
+        if self.level.is_some() && game_rect.area() > 0 {
+            f.render_widget(&self.game, game_rect);
         }
 
         let status_bar_rect = chunks[2];

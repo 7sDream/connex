@@ -4,10 +4,7 @@
 #![forbid(unsafe_code)]
 
 mod app;
-mod canvas;
-mod editor;
-mod game;
-mod world;
+mod widget;
 
 use std::{env::args, error::Error, time::Duration};
 
@@ -52,9 +49,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.hide_cursor()?;
 
     let output = if let Some((height, width)) = editor_world_size() {
-        Some(editor::Editor::new(height, width).run(&mut terminal, TICK_RATE)?)
+        Some(app::Editor::new(height, width).run(&mut terminal, TICK_RATE)?)
     } else {
-        game::Game::default().run(&mut terminal, TICK_RATE)?;
+        app::Game::default().run(&mut terminal, TICK_RATE)?;
         None
     };
 

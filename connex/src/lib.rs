@@ -9,9 +9,11 @@
 //! Base library for connex gameplay logic.
 
 mod block;
+mod game;
 mod world;
 
 extern crate alloc;
 
 pub use block::{Block, Direction};
+pub use game::{Command, Game};
 pub use world::World;

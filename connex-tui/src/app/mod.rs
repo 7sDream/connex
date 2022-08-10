@@ -1,3 +1,6 @@
+mod editor;
+mod game;
+
 use std::{
     error::Error,
     time::{Duration, Instant},
@@ -5,6 +8,9 @@ use std::{
 
 use crossterm::event::{Event, KeyEvent};
 use tui::{backend::Backend, Frame, Terminal};
+
+pub use editor::Editor;
+pub use game::Game;
 
 pub trait App {
     type Output;
