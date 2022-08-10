@@ -6,13 +6,12 @@
 
 //! # Connex
 //!
-//! Basic library for connex gameplay logic.
-//!
+//! Base library for connex gameplay logic.
 
 mod block;
 mod world;
 
 extern crate alloc;
 
-pub use block::{Block, Towards};
+pub use block::{Block, Direction};
 pub use world::World;

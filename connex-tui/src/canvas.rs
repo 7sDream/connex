@@ -4,7 +4,7 @@ use tui::{
     widgets::canvas::{Context, Line},
 };
 
-use connex::{Block, Towards, World};
+use connex::{Block, Direction, World};
 
 #[derive(Default, Debug, Clone)]
 struct LayoutInfo {
@@ -111,24 +111,24 @@ fn side_lines(block: &Block) -> &[BlockLine] {
     match block {
         Block::Empty => &[],
         Block::Endpoint(s) => match s {
-            Towards::Up => &[BL_EP_UP],
-            Towards::Right => &[BL_EP_RIGHT],
-            Towards::Down => &[BL_EP_DOWN],
-            Towards::Left => &[BL_EP_LEFT],
+            Direction::Up => &[BL_EP_UP],
+            Direction::Right => &[BL_EP_RIGHT],
+            Direction::Down => &[BL_EP_DOWN],
+            Direction::Left => &[BL_EP_LEFT],
         },
-        Block::Through(Towards::Up | Towards::Down) => &[BL_THROUGH_UP_DOWN],
-        Block::Through(Towards::Left | Towards::Right) => &[BL_THROUGH_LEFT_RIGHT],
+        Block::Through(Direction::Up | Direction::Down) => &[BL_THROUGH_UP_DOWN],
+        Block::Through(Direction::Left | Direction::Right) => &[BL_THROUGH_LEFT_RIGHT],
         Block::Turn(s) => match s {
-            Towards::Up => BL_RIGHT_UP_ARC,
-            Towards::Right => BL_RIGHT_DOWN_ARC,
-            Towards::Down => BL_LEFT_DOWN_ARC,
-            Towards::Left => BL_LEFT_UP_ARC,
+            Direction::Up => BL_RIGHT_UP_ARC,
+            Direction::Right => BL_RIGHT_DOWN_ARC,
+            Direction::Down => BL_LEFT_DOWN_ARC,
+            Direction::Left => BL_LEFT_UP_ARC,
         },
         Block::Fork(s) => match s {
-            Towards::Up => BL_UP_FORK,
-            Towards::Right => BL_RIGHT_FORK,
-            Towards::Down => BL_DOWN_FORK,
-            Towards::Left => BL_LEFT_FORK,
+            Direction::Up => BL_UP_FORK,
+            Direction::Right => BL_RIGHT_FORK,
+            Direction::Down => BL_DOWN_FORK,
+            Direction::Left => BL_LEFT_FORK,
         },
         Block::Cross => &[],
     }

@@ -4,7 +4,7 @@ use core::{
     str::FromStr,
 };
 
-use crate::{Block, Towards};
+use crate::{Block, Direction};
 
 /// World is a connex game world.
 ///
@@ -188,10 +188,10 @@ impl World {
     fn check_cell_with_right_down(&self, row: usize, col: usize) -> bool {
         let cell = self.get(row, col).unwrap();
 
-        if row == 0 && cell.open(Towards::Up)
-            || row == self.height - 1 && cell.open(Towards::Down)
-            || col == 0 && cell.open(Towards::Left)
-            || col == self.width - 1 && cell.open(Towards::Right)
+        if row == 0 && cell.passable(Direction::Up)
+            || row == self.height - 1 && cell.passable(Direction::Down)
+            || col == 0 && cell.passable(Direction::Left)
+            || col == self.width - 1 && cell.passable(Direction::Right)
         {
             return false;
         }
@@ -200,7 +200,7 @@ impl World {
         // right cell exists
         if next_col < self.width {
             let right = self.get(row, next_col).unwrap();
-            if !cell.fit(Towards::Right, right) {
+            if !cell.fit(Direction::Right, right) {
                 return false;
             }
         }
@@ -209,7 +209,7 @@ impl World {
         // down cell exists
         if next_row < self.height {
             let down = self.get(next_row, col).unwrap();
-            if !cell.fit(Towards::Down, down) {
+            if !cell.fit(Direction::Down, down) {
                 return false;
             }
         }
