@@ -211,19 +211,33 @@ impl<'a> Painter<'a> {
             layout: &self.layout,
         };
 
-        let mut boundary_position = Vec::new();
+        let mut normal_boundaries = Vec::new();
+        let mut highlight_boundaries = Vec::new();
 
         for i in 0..self.canvas.height() {
             for j in 0..self.canvas.width() {
-                block_painter.draw_inner(ctx, i, j, highlight_pred(i, j));
+                let highlight = highlight_pred(i, j);
+
+                block_painter.draw_inner(ctx, i, j, highlight);
                 if boundary_pred(i, j) {
-                    boundary_position.push((i, j));
+                    if highlight {
+                        &mut highlight_boundaries
+                    } else {
+                        &mut normal_boundaries
+                    }
+                    .push((i, j));
                 }
             }
         }
 
-        if !boundary_position.is_empty() {
-            for (row, col) in boundary_position {
+        if !normal_boundaries.is_empty() {
+            for (row, col) in normal_boundaries {
+                block_painter.draw_boundary(ctx, row, col, false);
+            }
+        }
+
+        if !highlight_boundaries.is_empty() {
+            for (row, col) in highlight_boundaries {
                 block_painter.draw_boundary(ctx, row, col, true);
             }
         }

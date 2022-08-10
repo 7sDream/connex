@@ -101,12 +101,12 @@ impl App for Game {
 
         let main_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(5), Constraint::Min(0)])
+            .constraints([Constraint::Length(8), Constraint::Min(0)])
             .split(chunks[1]);
 
         let level_rect = main_chunks[0];
         let mut level_list: Vec<_> = (0..LEVELS.len())
-            .map(|n| format!("{n:03}"))
+            .map(|n| format!(" {n:03}"))
             .map(ListItem::new)
             .collect();
         if let Some(level) = self.level {
@@ -114,7 +114,7 @@ impl App for Game {
             *selected = selected.clone().style(Style::default().fg(Color::Green));
         }
         let level_widget = List::new(level_list)
-            .block(TuiBlock::default().borders(Borders::ALL))
+            .block(TuiBlock::default().borders(Borders::ALL).title("Levels"))
             .highlight_style(Style::default().fg(Color::Green));
         f.render_widget(level_widget, level_rect);
 
@@ -124,11 +124,10 @@ impl App for Game {
         }
 
         let status_bar_rect = chunks[2];
-        let status_bar_widget = Paragraph::new(
-            "Up/Down/Left/Right/W/A/S/D to move | Space/Enter to turn block | R to restart Level | [ and ] to switch level",
-        )
-        .alignment(Alignment::Center)
-        .block(TuiBlock::default().borders(Borders::ALL));
+        let status_bar_widget =
+            Paragraph::new("W/A/S/D: Move | Space/Enter: Turn | R: Restart | [ and ]: Select level")
+                .alignment(Alignment::Center)
+                .block(TuiBlock::default().borders(Borders::ALL));
         f.render_widget(status_bar_widget, status_bar_rect);
     }
 

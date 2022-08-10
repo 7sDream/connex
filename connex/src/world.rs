@@ -220,5 +220,6 @@ impl World {
     /// Check if this world's blocks is all fit.
     pub fn solved(&self) -> bool {
         (0..self.height).all(|row| (0..self.width).all(|col| self.check_cell_with_right_down(row, col)))
+            && !self.blocks.iter().all(|b| b == &Block::Empty)
     }
 }

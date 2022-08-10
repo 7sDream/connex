@@ -26,10 +26,10 @@ impl WorldWidget {
 
     pub fn on_key(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Char('k' | 'w') | KeyCode::Up if self.row > 0 => self.row -= 1,
-            KeyCode::Char('l' | 'd') | KeyCode::Right if self.col < self.world.width() - 1 => self.col += 1,
-            KeyCode::Char('j' | 's') | KeyCode::Down if self.row < self.world.height() - 1 => self.row += 1,
-            KeyCode::Char('h' | 'a') | KeyCode::Left if self.col > 0 => self.col -= 1,
+            KeyCode::Char('k' | 'w') if self.row > 0 => self.row -= 1,
+            KeyCode::Char('l' | 'd') if self.col < self.world.width() - 1 => self.col += 1,
+            KeyCode::Char('j' | 's') if self.row < self.world.height() - 1 => self.row += 1,
+            KeyCode::Char('h' | 'a') if self.col > 0 => self.col -= 1,
             KeyCode::Char(' ') | KeyCode::Enter => {
                 self.world.get_mut(self.row, self.col).unwrap().turn_me();
                 self.solved = self.world.solved();
@@ -75,7 +75,7 @@ impl Widget for &WorldWidget {
                 canvas_painter.draw(
                     ctx,
                     |i, j| self.solved || i == self.row && j == self.col, // line highlight
-                    |i, j| (!self.solved || self.edit_mode) && i == self.row && j == self.col, // need boundary
+                    |i, j| self.edit_mode || (!self.solved && i == self.row && j == self.col), // need boundary
                 )
             })
             .x_bounds(canvas_painter.x_bound())
