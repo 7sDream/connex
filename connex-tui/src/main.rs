@@ -21,6 +21,28 @@ use app::App;
 
 const TICK_RATE: Duration = std::time::Duration::from_millis(20);
 
+fn editor_world_size() -> Option<(usize, usize)> {
+    let editor_args: Vec<_> = args().skip(1).take(3).collect();
+    let is_editor_mode = editor_args.get(0).map(|s| s == "editor").unwrap_or_default();
+
+    if !is_editor_mode {
+        return None;
+    }
+
+    let height = editor_args
+        .get(1)
+        .and_then(|h| h.parse::<usize>().ok())
+        .unwrap_or(3)
+        .max(1);
+    let width = editor_args
+        .get(2)
+        .and_then(|w| w.parse::<usize>().ok())
+        .unwrap_or(3)
+        .max(1);
+
+    Some((height, width))
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = std::io::stdout();
@@ -29,12 +51,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
     terminal.hide_cursor()?;
 
-    let editor = args().skip(1).take(1).next().unwrap_or_default() == "editor";
-
-    let output = if editor {
-        Some(editor::Editor::run(&mut terminal, TICK_RATE)?)
+    let output = if let Some((height, width)) = editor_world_size() {
+        Some(editor::Editor::new(height, width).run(&mut terminal, TICK_RATE)?)
     } else {
-        game::Game::run(&mut terminal, TICK_RATE)?;
+        game::Game::default().run(&mut terminal, TICK_RATE)?;
         None
     };
 

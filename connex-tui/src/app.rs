@@ -6,7 +6,7 @@ use std::{
 use crossterm::event::{Event, KeyEvent};
 use tui::{backend::Backend, Frame, Terminal};
 
-pub trait App: Default {
+pub trait App {
     type Output;
 
     fn on_key(&mut self, key: KeyEvent) -> bool;
@@ -14,31 +14,31 @@ pub trait App: Default {
     fn draw<B: Backend>(&self, f: &mut Frame<B>);
     fn output(self) -> Self::Output;
 
-    fn run<B: Backend>(terminal: &mut Terminal<B>, tick_rate: Duration) -> Result<Self::Output, Box<dyn Error>>
+    fn run<B: Backend>(
+        mut self, terminal: &mut Terminal<B>, tick_rate: Duration,
+    ) -> Result<Self::Output, Box<dyn Error>>
     where
         Self: Sized,
     {
-        let mut app = Self::default();
-
         let mut last_tick = Instant::now();
         loop {
-            terminal.draw(|f| app.draw(f))?;
+            terminal.draw(|f| self.draw(f))?;
 
             let timeout = tick_rate.checked_sub(last_tick.elapsed()).unwrap_or(Duration::ZERO);
             if crossterm::event::poll(timeout)? {
                 if let Event::Key(key) = crossterm::event::read()? {
-                    if !app.on_key(key) {
+                    if !self.on_key(key) {
                         break;
                     }
                 }
             }
 
             if last_tick.elapsed() >= tick_rate {
-                app.on_tick();
+                self.on_tick();
                 last_tick = Instant::now();
             }
         }
 
-        Ok(app.output())
+        Ok(self.output())
     }
 }

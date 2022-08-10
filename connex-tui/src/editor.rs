@@ -8,10 +8,10 @@ pub struct Editor {
     world: WorldWidget,
 }
 
-impl Default for Editor {
-    fn default() -> Self {
+impl Editor {
+    pub fn new(height: usize, width: usize) -> Self {
         let mut world = WorldWidget::default();
-        world.reset(World::empty(3, 3));
+        world.reset(World::empty(height, width));
         world.edit_mode(true);
         Self { world }
     }
