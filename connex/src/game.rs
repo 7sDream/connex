@@ -8,10 +8,10 @@ pub enum Command {
     /// Move cursor one block towards given direction.
     MoveCursor(Direction),
     /// Turn block under cursor clockwise.
-    TurnCursorBlock,
+    RotateCursorBlock,
     /// Turn block at given index clockwise.
-    TurnBlock(usize, usize),
-    /// Rotate whole world, with or without block turn.
+    RotateBlock(usize, usize),
+    /// Rotate whole world, with or without block rotation.
     RotateWholeWorld(bool),
     /// Replace current block.
     ReplaceCursorBlock(Block),
@@ -105,8 +105,8 @@ impl Game {
         };
     }
 
-    fn turn_block(&mut self, row: usize, col: usize) {
-        self.world.get_mut(row, col).unwrap().turn_me();
+    fn rotate_block(&mut self, row: usize, col: usize) {
+        self.world.get_mut(row, col).unwrap().rotate();
         self.solved = self.world.solved();
     }
 
@@ -120,8 +120,8 @@ impl Game {
         match command {
             Command::Reset(world) => self.reset(world),
             Command::MoveCursor(dir) => self.move_cursor(dir),
-            Command::TurnCursorBlock => self.turn_block(self.row, self.col),
-            Command::TurnBlock(row, col) => self.turn_block(row, col),
+            Command::RotateCursorBlock => self.rotate_block(self.row, self.col),
+            Command::RotateBlock(row, col) => self.rotate_block(row, col),
             Command::RotateWholeWorld(_) => unimplemented!(),
             Command::ReplaceCursorBlock(block) => self.replace_block(self.row, self.col, block),
             Command::ReplaceBlock(row, col, block) => self.replace_block(row, col, block),

@@ -151,17 +151,22 @@ impl World {
         }
     }
 
-    /// Get height of world.
+    /// Get size of the world.
+    pub fn size(&self) -> (usize, usize) {
+        (self.height, self.width)
+    }
+
+    /// Get height of the world.
     pub fn height(&self) -> usize {
         self.height
     }
 
-    /// Get width of world.
+    /// Get width of the world.
     pub fn width(&self) -> usize {
         self.width
     }
 
-    /// Get a block in given location, return None if out of range.
+    /// Get a block in given index, return None if out of range.
     pub fn get(&self, row: usize, col: usize) -> Option<&Block> {
         self.blocks.get(row * self.width + col)
     }
@@ -176,16 +181,16 @@ impl World {
         self.blocks
     }
 
-    /// Turn a block in given location.
+    /// Rotate the block at given index.
     ///
     /// ## Panics
     ///
-    /// If location out of range.
-    pub fn turn(&mut self, row: usize, col: usize) {
-        self.get_mut(row, col).expect("block index out of range").turn_me();
+    /// If index out of range.
+    pub fn rotate(&mut self, row: usize, col: usize) {
+        self.get_mut(row, col).expect("block index out of range").rotate();
     }
 
-    fn check_cell_with_right_down(&self, row: usize, col: usize) -> bool {
+    fn check_block_fit_with_right_down(&self, row: usize, col: usize) -> bool {
         let cell = self.get(row, col).unwrap();
 
         if row == 0 && cell.passable(Direction::Up)
@@ -219,7 +224,7 @@ impl World {
 
     /// Check if this world's blocks is all fit.
     pub fn solved(&self) -> bool {
-        (0..self.height).all(|row| (0..self.width).all(|col| self.check_cell_with_right_down(row, col)))
-            && !self.blocks.iter().all(|b| b == &Block::Empty)
+        (0..self.height).all(|row| (0..self.width).all(|col| self.check_block_fit_with_right_down(row, col)))
+            && self.blocks.iter().any(|b| b != &Block::Empty)
     }
 }

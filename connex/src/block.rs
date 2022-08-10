@@ -28,8 +28,8 @@ impl Direction {
         }
     }
 
-    /// Get result of turn clockwise.
-    pub fn turn(&self) -> Self {
+    /// Get result of rotate clockwise.
+    pub fn rotated(&self) -> Self {
         match self {
             Self::Up => Self::Right,
             Self::Right => Self::Down,
@@ -186,22 +186,22 @@ impl Block {
         }
     }
 
-    /// Get result of turn this block clockwise.
-    pub fn turn(&self) -> Self {
+    /// Get result of rotate this block clockwise.
+    pub fn rotated(&self) -> Self {
         match self {
             Self::Empty => Self::Empty,
-            Self::Endpoint(t) => Self::Endpoint(t.turn()),
-            Self::Through(t) => Self::Through(t.turn()),
-            Self::Turn(t) => Self::Turn(t.turn()),
-            Self::Fork(t) => Self::Fork(t.turn()),
+            Self::Endpoint(t) => Self::Endpoint(t.rotated()),
+            Self::Through(t) => Self::Through(t.rotated()),
+            Self::Turn(t) => Self::Turn(t.rotated()),
+            Self::Fork(t) => Self::Fork(t.rotated()),
             Self::Cross => Self::Cross,
         }
     }
 
-    /// Turn this block clockwise.
-    pub fn turn_me(&mut self) {
+    /// Rotate this block clockwise.
+    pub fn rotate(&mut self) {
         if let Some(t) = self.direction_mut() {
-            *t = t.turn()
+            *t = t.rotated()
         }
     }
 
@@ -211,7 +211,7 @@ impl Block {
             Self::Empty => false,
             Self::Endpoint(t) => t == &rhs,
             Self::Through(t) => t.horizontal() == rhs.horizontal(),
-            Self::Turn(t) => t == &rhs || t.turn() == rhs,
+            Self::Turn(t) => t == &rhs || t.rotated() == rhs,
             Self::Fork(t) => t != &rhs,
             Self::Cross => true,
         }

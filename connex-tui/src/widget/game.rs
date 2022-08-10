@@ -39,7 +39,7 @@ impl Game {
             KeyCode::Char('l' | 'd') => Command::MoveCursor(Direction::Right),
             KeyCode::Char('j' | 's') => Command::MoveCursor(Direction::Down),
             KeyCode::Char('h' | 'a') => Command::MoveCursor(Direction::Left),
-            KeyCode::Char(' ') | KeyCode::Enter => Command::TurnCursorBlock,
+            KeyCode::Char(' ') | KeyCode::Enter => Command::RotateCursorBlock,
             _ => return,
         };
 
