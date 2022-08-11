@@ -14,7 +14,7 @@ impl Editor {
     pub fn new(height: NonZeroUsize, width: NonZeroUsize) -> Self {
         let mut game_widget = GameWidget::default();
         game_widget.reset(World::empty(height, width));
-        game_widget.edit_mode(true);
+        game_widget.set_edit(true);
         Self { game_widget }
     }
 }
@@ -24,6 +24,10 @@ impl App for Editor {
 
     fn on_key(&mut self, key: crossterm::event::KeyEvent) -> bool {
         self.game_widget.on_key(key);
+
+        if let KeyCode::Char('p') = key.code {
+            self.game_widget.set_edit(!self.game_widget.is_edit());
+        }
 
         !matches!(key.code, KeyCode::Char('q') | KeyCode::Esc)
     }

@@ -165,7 +165,7 @@ impl<'a, 'b> BlockPainter<'a, 'b> {
         }
     }
 
-    pub fn draw_inner(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool) {
+    pub fn draw_block(&self, ctx: &mut Context, row: usize, col: usize, highlight: bool) {
         let block = self.canvas.get(row, col).unwrap();
 
         let lines = common_lines(block)
@@ -182,12 +182,12 @@ impl<'a, 'b> BlockPainter<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct Painter<'a> {
+pub struct WorldPainter<'a> {
     world: &'a connex::World,
     layout: LayoutInfo,
 }
 
-impl<'a> Painter<'a> {
+impl<'a> WorldPainter<'a> {
     pub fn new(world: &'a connex::World, rect: &Rect) -> Self {
         let layout = layout(rect, world);
         Self { world, layout }
@@ -206,7 +206,7 @@ impl<'a> Painter<'a> {
         F1: FnMut(usize, usize) -> bool,
         F2: FnMut(usize, usize) -> bool,
     {
-        let block_painter = BlockPainter {
+        let painter = BlockPainter {
             canvas: self.world,
             layout: &self.layout,
         };
@@ -218,7 +218,7 @@ impl<'a> Painter<'a> {
             for j in 0..self.world.width().get() {
                 let highlight = highlight_pred(i, j);
 
-                block_painter.draw_inner(ctx, i, j, highlight);
+                painter.draw_block(ctx, i, j, highlight);
                 if boundary_pred(i, j) {
                     if highlight {
                         &mut highlight_boundaries
@@ -230,15 +230,17 @@ impl<'a> Painter<'a> {
             }
         }
 
+        // draw highlight boundary after normal boundary to make sure highlight color is on top.
+
         if !normal_boundaries.is_empty() {
             for (row, col) in normal_boundaries {
-                block_painter.draw_boundary(ctx, row, col, false);
+                painter.draw_boundary(ctx, row, col, false);
             }
         }
 
         if !highlight_boundaries.is_empty() {
             for (row, col) in highlight_boundaries {
-                block_painter.draw_boundary(ctx, row, col, true);
+                painter.draw_boundary(ctx, row, col, true);
             }
         }
     }
