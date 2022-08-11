@@ -83,7 +83,7 @@ impl Direction {
 /// ```
 ///
 /// [^1]: `-`/`|` means passable direction, center number is the character for that type of block.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Block {
     /// Empty block.
     Empty,

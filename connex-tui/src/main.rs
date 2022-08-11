@@ -6,7 +6,7 @@
 mod app;
 mod widget;
 
-use std::{env::args, error::Error, time::Duration};
+use std::{env::args, error::Error, num::NonZeroUsize, time::Duration};
 
 use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
@@ -18,7 +18,7 @@ use app::App;
 
 const TICK_RATE: Duration = std::time::Duration::from_millis(20);
 
-fn editor_world_size() -> Option<(usize, usize)> {
+fn editor_world_size() -> Option<(NonZeroUsize, NonZeroUsize)> {
     let editor_args: Vec<_> = args().skip(1).take(3).collect();
     let is_editor_mode = editor_args.get(0).map(|s| s == "editor").unwrap_or_default();
 
@@ -37,7 +37,7 @@ fn editor_world_size() -> Option<(usize, usize)> {
         .unwrap_or(3)
         .max(1);
 
-    Some((height, width))
+    Some((height.try_into().unwrap(), width.try_into().unwrap()))
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

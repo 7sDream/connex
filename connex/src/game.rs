@@ -3,6 +3,8 @@ use crate::{Block, Direction, World};
 /// Command is game control command.
 #[derive(Debug, Clone)]
 pub enum Command {
+    /// Do Nothing.
+    Noop,
     /// Reset game world, use to switch level or restart level.
     Reset(World),
     /// Move cursor one block towards given direction.
@@ -58,6 +60,16 @@ impl Game {
         (self.row, self.col)
     }
 
+    /// Get col of cursor.
+    pub fn col(&self) -> usize {
+        self.col
+    }
+
+    /// Get row of cursor.
+    pub fn row(&self) -> usize {
+        self.row
+    }
+
     /// Check if current game world is in solved state.
     pub fn solved(&self) -> bool {
         self.solved
@@ -73,11 +85,18 @@ impl Game {
         self.world
     }
 
-    fn reset(&mut self, world: World) {
+    fn mutate_world<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut World),
+    {
+        f(&mut self.world);
+        self.solved = self.world.solved();
+    }
+
+    fn reset(&mut self, mut world: World) {
         self.col = 0;
         self.row = 0;
-        self.world = world;
-        self.solved = self.world.solved();
+        self.mutate_world(|old| core::mem::swap(old, &mut world));
     }
 
     fn move_cursor(&mut self, dir: Direction) {
@@ -88,12 +107,12 @@ impl Game {
                 }
             }
             Direction::Right => {
-                if self.col < self.world.width() - 1 {
+                if self.col < self.world.width().get() - 1 {
                     self.col += 1
                 }
             }
             Direction::Down => {
-                if self.row < self.world.height() - 1 {
+                if self.row < self.world.height().get() - 1 {
                     self.row += 1
                 }
             }
@@ -106,18 +125,49 @@ impl Game {
     }
 
     fn rotate_block(&mut self, row: usize, col: usize) {
-        self.world.get_mut(row, col).unwrap().rotate();
-        self.solved = self.world.solved();
+        self.mutate_world(|w| w.get_mut(row, col).unwrap().rotate());
     }
 
     fn replace_block(&mut self, row: usize, col: usize, block: Block) {
-        *self.world.get_mut(row, col).unwrap() = block;
-        self.solved = self.world.solved();
+        self.mutate_world(|w| *w.get_mut(row, col).unwrap() = block);
+    }
+
+    fn insert_row(&mut self, index: usize) {
+        self.mutate_world(|w| w.insert_row(index));
+        if self.row >= index {
+            self.row += 1;
+        }
+    }
+
+    fn remove_row(&mut self, index: usize) {
+        if self.world.height().get() > 1 {
+            self.mutate_world(|w| w.remove_row(index));
+            if self.row == self.world.height().get() {
+                self.row -= 1;
+            }
+        }
+    }
+
+    fn insert_column(&mut self, index: usize) {
+        self.mutate_world(|w| w.insert_column(index));
+        if self.col >= index {
+            self.col += 1;
+        }
+    }
+
+    fn remove_column(&mut self, index: usize) {
+        if self.world.width().get() > 1 {
+            self.mutate_world(|w| w.remove_column(index));
+            if self.col == self.world.width().get() {
+                self.col -= 1;
+            }
+        }
     }
 
     /// Apply a command in this game.
     pub fn apply(&mut self, command: Command) {
         match command {
+            Command::Noop => (),
             Command::Reset(world) => self.reset(world),
             Command::MoveCursor(dir) => self.move_cursor(dir),
             Command::RotateCursorBlock => self.rotate_block(self.row, self.col),
@@ -125,10 +175,10 @@ impl Game {
             Command::RotateWholeWorld(_) => unimplemented!(),
             Command::ReplaceCursorBlock(block) => self.replace_block(self.row, self.col, block),
             Command::ReplaceBlock(row, col, block) => self.replace_block(row, col, block),
-            Command::InsertRow(_) => unimplemented!(),
-            Command::InsertColumn(_) => unimplemented!(),
-            Command::RemoveRow(_) => unimplemented!(),
-            Command::RemoveColumn(_) => unimplemented!(),
+            Command::InsertRow(index) => self.insert_row(index),
+            Command::InsertColumn(index) => self.insert_column(index),
+            Command::RemoveRow(index) => self.remove_row(index),
+            Command::RemoveColumn(index) => self.remove_column(index),
         }
     }
 }

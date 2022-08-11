@@ -3,7 +3,7 @@ use tui::widgets::{canvas::Canvas, Block, Borders, Widget};
 
 use connex::{Command, Direction, World};
 
-use super::canvas::Painter;
+use super::Painter;
 
 #[derive(Debug, Clone, Default)]
 pub struct Game {
@@ -27,10 +27,23 @@ impl Game {
     pub fn on_key(&mut self, key: KeyEvent) {
         if self.edit_mode {
             if let KeyCode::Char(c) = key.code {
-                if let Ok(block) = c.to_string().parse() {
-                    self.game.apply(Command::ReplaceCursorBlock(block));
-                    return;
-                }
+                let command = match c {
+                    'N' => Command::InsertRow(self.game.row() + 1),
+                    'O' => Command::InsertRow(self.game.row()),
+                    'D' => Command::RemoveRow(self.game.row()),
+                    'A' => Command::InsertColumn(self.game.col() + 1),
+                    'I' => Command::InsertColumn(self.game.col()),
+                    'X' => Command::RemoveColumn(self.game.col()),
+                    _ => {
+                        if let Ok(block) = c.to_string().parse() {
+                            Command::ReplaceCursorBlock(block)
+                        } else {
+                            Command::Noop
+                        }
+                    }
+                };
+
+                self.game.apply(command);
             }
         }
 
@@ -40,7 +53,7 @@ impl Game {
             KeyCode::Char('j' | 's') => Command::MoveCursor(Direction::Down),
             KeyCode::Char('h' | 'a') => Command::MoveCursor(Direction::Left),
             KeyCode::Char(' ') | KeyCode::Enter => Command::RotateCursorBlock,
-            _ => return,
+            _ => Command::Noop,
         };
 
         self.game.apply(command);
@@ -66,7 +79,7 @@ impl Widget for &Game {
             .paint(|ctx| {
                 canvas_painter.draw(
                     ctx,
-                    |i, j| solved || i == row && j == col, // line highlight
+                    |i, j| (solved && !self.edit_mode) || i == row && j == col, // line highlight
                     |i, j| self.edit_mode || (!solved && i == row && j == col), // need boundary
                 )
             })

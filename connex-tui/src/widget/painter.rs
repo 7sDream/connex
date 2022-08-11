@@ -29,7 +29,7 @@ fn lcm(a: u64, b: u64) -> u64 {
     a * b / gcd(a, b)
 }
 
-fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
+fn layout(rect: &Rect, world: &World) -> LayoutInfo {
     if rect.area() == 0 {
         return LayoutInfo::default();
     }
@@ -37,8 +37,8 @@ fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
     let rect_w = (rect.width as u64) * 2;
     let rect_h = (rect.height as u64) * 4;
 
-    let radio_w = rect_w as f64 / canvas.width() as f64;
-    let radio_h = rect_h as f64 / canvas.height() as f64;
+    let radio_w = rect_w as f64 / world.width().get() as f64;
+    let radio_h = rect_h as f64 / world.height().get() as f64;
 
     let mut info = LayoutInfo::default();
 
@@ -46,15 +46,15 @@ fn layout(rect: &Rect, canvas: &World) -> LayoutInfo {
     info.block_size = 4 * info.point_size;
 
     if radio_w > radio_h {
-        info.y_bound = canvas.height() as u64 * info.block_size + 2 * info.point_size;
+        info.y_bound = world.height().get() as u64 * info.block_size + 2 * info.point_size;
         info.x_bound = info.y_bound * rect_w / rect_h;
         info.y_offset = info.point_size;
-        info.x_offset = (info.x_bound - canvas.width() as u64 * info.block_size) / 2;
+        info.x_offset = (info.x_bound - world.width().get() as u64 * info.block_size) / 2;
     } else {
-        info.x_bound = canvas.width() as u64 * info.block_size + 2 * info.point_size;
+        info.x_bound = world.width().get() as u64 * info.block_size + 2 * info.point_size;
         info.y_bound = info.x_bound * rect_h / rect_w;
         info.x_offset = info.point_size;
-        info.y_offset = (info.y_bound - canvas.height() as u64 * info.block_size) / 2;
+        info.y_offset = (info.y_bound - world.height().get() as u64 * info.block_size) / 2;
     }
 
     info
@@ -183,14 +183,14 @@ impl<'a, 'b> BlockPainter<'a, 'b> {
 
 #[derive(Debug)]
 pub struct Painter<'a> {
-    canvas: &'a connex::World,
+    world: &'a connex::World,
     layout: LayoutInfo,
 }
 
 impl<'a> Painter<'a> {
-    pub fn new(canvas: &'a connex::World, rect: &Rect) -> Self {
-        let layout = layout(rect, canvas);
-        Self { canvas, layout }
+    pub fn new(world: &'a connex::World, rect: &Rect) -> Self {
+        let layout = layout(rect, world);
+        Self { world, layout }
     }
 
     pub fn x_bound(&self) -> [f64; 2] {
@@ -207,15 +207,15 @@ impl<'a> Painter<'a> {
         F2: FnMut(usize, usize) -> bool,
     {
         let block_painter = BlockPainter {
-            canvas: self.canvas,
+            canvas: self.world,
             layout: &self.layout,
         };
 
         let mut normal_boundaries = Vec::new();
         let mut highlight_boundaries = Vec::new();
 
-        for i in 0..self.canvas.height() {
-            for j in 0..self.canvas.width() {
+        for i in 0..self.world.height().get() {
+            for j in 0..self.world.width().get() {
                 let highlight = highlight_pred(i, j);
 
                 block_painter.draw_inner(ctx, i, j, highlight);

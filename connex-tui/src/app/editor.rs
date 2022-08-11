@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use connex::World;
 use crossterm::event::KeyCode;
 
@@ -9,7 +11,7 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(height: usize, width: usize) -> Self {
+    pub fn new(height: NonZeroUsize, width: NonZeroUsize) -> Self {
         let mut game_widget = GameWidget::default();
         game_widget.reset(World::empty(height, width));
         game_widget.edit_mode(true);
