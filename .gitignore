@@ -1,2 +1,5 @@
 /.vscode
 /target
+
+# macOS staff
+/**/.DS_Store

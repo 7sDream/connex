@@ -1,5 +1,6 @@
 mod game;
 mod painter;
+mod text;
 
 pub use game::Game;
-use painter::WorldPainter;
+pub use text::tui_text;

@@ -14,7 +14,10 @@ use tui::{
 use connex::World;
 use connex_levels::LEVELS;
 
-use crate::{app::App, widget::Game as GameWidget};
+use crate::{
+    app::App,
+    widget::{tui_text, Game as GameWidget},
+};
 
 pub struct Game {
     level: Option<usize>,
@@ -124,10 +127,10 @@ impl App for Game {
         }
 
         let status_bar_rect = chunks[2];
-        let status_bar_widget =
-            Paragraph::new("W/A/S/D: Move | Space/Enter: Turn | R: Restart | [ and ]: Select level")
-                .alignment(Alignment::Center)
-                .block(TuiBlock::default().borders(Borders::ALL));
+        let help = tui_text("<green w>/<green a>/<green s>/<green d>: Move | <green Space>/<green Enter>: Turn | <green r>: Restart | <green [>/<green ]>: Select level");
+        let status_bar_widget = Paragraph::new(help)
+            .alignment(Alignment::Center)
+            .block(TuiBlock::default().borders(Borders::ALL));
         f.render_widget(status_bar_widget, status_bar_rect);
     }
 

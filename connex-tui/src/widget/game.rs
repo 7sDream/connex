@@ -3,7 +3,7 @@ use tui::widgets::{canvas::Canvas, Block, Borders, Widget};
 
 use connex::{Command, Direction, World};
 
-use super::WorldPainter;
+use super::painter::WorldPainter;
 
 #[derive(Debug, Clone, Default)]
 pub struct Game {
