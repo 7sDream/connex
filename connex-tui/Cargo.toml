@@ -13,25 +13,11 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies.rand]
-version = "0.8.5"
-
-[dependencies.tui]
-version = "0.18"
-default-features = false
-features = ["crossterm"]
-
-[dependencies.crossterm]
-version = "0.23"
-
-[dependencies.nom]
-version = "7"
-
-[dependencies.connex]
-version = "0.1.0"
-path = "../connex"
-features = ["random"]
-
-[dependencies.connex-levels]
-version = "0.1.0"
-path = "../connex-levels"
+[dependencies]
+connex = { version = "0.1.0", path = "../connex", features = ["random"] }
+connex-levels = { version = "0.1.0", path = "../connex-levels" }
+tui-markup = "0.1.0"
+once_cell = "1.13.0"
+rand = "0.8.5"
+tui = "0.18"
+crossterm = "0.25"

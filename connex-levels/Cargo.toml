@@ -15,6 +15,5 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[build-dependencies.connex]
-version = "0.1.0"
-path = "../connex"
+[build-dependencies]
+connex = { version = "0.1.0", path = "../connex" }

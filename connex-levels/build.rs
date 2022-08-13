@@ -23,13 +23,17 @@ fn main() {
         println!("cargo:rerun-if-changed={}", abs_path.to_str().unwrap());
 
         let content = String::from_utf8(fs::read(&abs_path).unwrap()).unwrap();
-        World::from_str(&content).map_err(|e| format!("{} compile failed: {e}", path.to_str().unwrap())).unwrap();
+        World::from_str(&content)
+            .map_err(|e| format!("{} compile failed: {e}", path.to_str().unwrap()))
+            .unwrap();
 
         src.push_str("include_str!(r#\"");
         src.push_str(abs_path.to_str().unwrap());
         src.push_str("\"#),");
     }
     src.push(']');
+
+    println!("cargo:rerun-if-changed=levels");
 
     let mut out_file_path = PathBuf::new();
     out_file_path.push(std::env::var("OUT_DIR").unwrap());

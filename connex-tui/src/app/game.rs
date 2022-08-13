@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 
 use crossterm::event::{KeyCode, KeyEvent};
+use once_cell::sync::Lazy;
 use rand::thread_rng;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style},
-    text::Span,
+    text::{Span, Text},
     widgets::{Block as TuiBlock, Borders, List, ListItem, Paragraph},
     Frame,
 };
@@ -14,10 +15,11 @@ use tui::{
 use connex::World;
 use connex_levels::LEVELS;
 
-use crate::{
-    app::App,
-    widget::{tui_text, Game as GameWidget},
-};
+static HELP_TEXT: Lazy<Text<'static>> = Lazy::new(|| {
+    tui_markup::parse("<green w>/<green a>/<green s>/<green d>: Move | <green Space>/<green Enter>: Turn | <green r>: Restart | <green [>/<green ]>: Select level").unwrap()
+});
+
+use crate::{app::App, widget::Game as GameWidget};
 
 pub struct Game {
     level: Option<usize>,
@@ -127,8 +129,7 @@ impl App for Game {
         }
 
         let status_bar_rect = chunks[2];
-        let help = tui_text("<green w>/<green a>/<green s>/<green d>: Move | <green Space>/<green Enter>: Turn | <green r>: Restart | <green [>/<green ]>: Select level");
-        let status_bar_widget = Paragraph::new(help)
+        let status_bar_widget = Paragraph::new(HELP_TEXT.clone())
             .alignment(Alignment::Center)
             .block(TuiBlock::default().borders(Borders::ALL));
         f.render_widget(status_bar_widget, status_bar_rect);
