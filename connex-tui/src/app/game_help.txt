@@ -1,0 +1,19 @@
+<h1 HELP PAGE>
+
+<h2 The Goal>
+
+Reverts the graph to a <goal complete loop>, each block <red cannot have unconnected edges>.
+
+<h2 Key binding>
+
+- <kbd w>/<kbd s>/<kbd a>/<kbd d> to <action select block>
+- <kbd Space>/<kbd Enter> to <action rotate block>
+- <kbd r> to <action restart current level>(randomly shuffled again)
+- <kbd [>/<kbd ]> to <action switch levels>
+- <kbd ?> to <action switch between game and help page>
+- <kbd q>/<kbd ESC> to <action,red quit>
+
+<h2 Notes>
+
+1. Now it has a small number of levels, This is just a toy project I wrote myself to play with.
+2. If you finish a level, the whole loop will becomes <green green> and you can't move or rotate any more. Just <action restart> or <action goto next level>.

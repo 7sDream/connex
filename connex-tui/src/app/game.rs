@@ -6,22 +6,46 @@ use rand::thread_rng;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Text},
-    widgets::{Block as TuiBlock, Borders, List, ListItem, Paragraph},
+    widgets::{Block as TuiBlock, Borders, List, ListItem, Paragraph, Wrap},
     Frame,
 };
+use tui_markup::generator::TuiTextGenerator;
 
 use connex::World;
 use connex_levels::LEVELS;
 
-static HELP_TEXT: Lazy<Text<'static>> = Lazy::new(|| {
-    tui_markup::parse("<green w>/<green a>/<green s>/<green d>: Move | <green Space>/<green Enter>: Turn | <green r>: Restart | <green [>/<green ]>: Select level").unwrap()
-});
+static HELP_TEXT: Lazy<Text<'static>> = Lazy::new(compile_help_text);
 
 use crate::{app::App, widget::Game as GameWidget};
 
+fn compile_help_text() -> Text<'static> {
+    let gen = TuiTextGenerator::new(|tag: &str| {
+        Some(match tag {
+            "h1" => Style::default()
+                .bg(Color::White)
+                .fg(Color::Blue)
+                .add_modifier(Modifier::BOLD),
+            "h2" => Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD),
+            "goal" => Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
+            "action" => Style::default().fg(Color::Cyan),
+            "kbd" => Style::default().fg(Color::Green),
+            _ => return None,
+        })
+    });
+    tui_markup::compile_with(include_str!("game_help.txt"), gen).unwrap()
+}
+
+enum Page {
+    Gaming,
+    Help,
+}
+
 pub struct Game {
+    page: Page,
     level: Option<usize>,
     game_widget: GameWidget,
 }
@@ -29,6 +53,7 @@ pub struct Game {
 impl Default for Game {
     fn default() -> Self {
         let mut state = Game {
+            page: Page::Gaming,
             level: None,
             game_widget: GameWidget::default(),
         };
@@ -53,10 +78,21 @@ impl Game {
     }
 }
 
-impl App for Game {
-    type Output = ();
+impl Game {
+    fn on_key_common(&mut self, key: KeyEvent) -> bool {
+        match key.code {
+            KeyCode::Char('?') => match self.page {
+                Page::Gaming => self.page = Page::Help,
+                Page::Help => self.page = Page::Gaming,
+            },
+            KeyCode::Char('q') | KeyCode::Esc => return false,
+            _ => (),
+        };
 
-    fn on_key(&mut self, key: KeyEvent) -> bool {
+        true
+    }
+
+    fn on_key_gaming(&mut self, key: KeyEvent) -> bool {
         if let Some(level) = self.level {
             if !self.game_widget.solved() {
                 self.game_widget.on_key(key);
@@ -74,16 +110,17 @@ impl App for Game {
             KeyCode::Char('[') if self.level.is_some() => {
                 self.start_level((self.level.map(|x| x + LEVELS.len() - 1)).unwrap_or_default() % LEVELS.len())
             }
-            KeyCode::Char('q') | KeyCode::Esc => return false,
             _ => (),
         }
 
         true
     }
 
-    fn on_tick(&mut self) {}
+    fn on_key_help(&mut self, _key: KeyEvent) -> bool {
+        true
+    }
 
-    fn draw<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_gaming<B: Backend>(&self, f: &mut Frame<B>) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(3)].as_ref())
@@ -129,10 +166,42 @@ impl App for Game {
         }
 
         let status_bar_rect = chunks[2];
-        let status_bar_widget = Paragraph::new(HELP_TEXT.clone())
+        let status_bar_widget = Paragraph::new("Press ? to see help page")
             .alignment(Alignment::Center)
             .block(TuiBlock::default().borders(Borders::ALL));
         f.render_widget(status_bar_widget, status_bar_rect);
+    }
+
+    fn draw_help<B: Backend>(&self, f: &mut Frame<B>) {
+        let p = Paragraph::new(HELP_TEXT.clone())
+            .block(TuiBlock::default().borders(Borders::ALL))
+            .wrap(Wrap { trim: false })
+            .alignment(Alignment::Left);
+        f.render_widget(p, f.size());
+    }
+}
+
+impl App for Game {
+    type Output = ();
+
+    fn on_key(&mut self, key: KeyEvent) -> bool {
+        if !self.on_key_common(key) {
+            return false;
+        }
+
+        match self.page {
+            Page::Gaming => self.on_key_gaming(key),
+            Page::Help => self.on_key_help(key),
+        }
+    }
+
+    fn on_tick(&mut self) {}
+
+    fn draw<B: Backend>(&self, f: &mut Frame<B>) {
+        match self.page {
+            Page::Gaming => self.draw_gaming(f),
+            Page::Help => self.draw_help(f),
+        }
     }
 
     fn output(self) -> Self::Output {}
