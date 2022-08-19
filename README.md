@@ -12,9 +12,9 @@ There are many crate in this workspace, the core part is `connex` and `connex-le
 
 Other crates, are just some kind of implements to show the gaming UI and dispatch user action to `connex` game logic to make this game playable.
 
-The reason it's designed this is that I want to use this game to learn all kinds of different game engines(bevy, Amethyst, Fyrox, Godot, etc.), GUI libraries(tui, egui, iced, durid), and even WASM and frontend UI framework.
+The reason it's designed like this is that I want to use this game to learn all kinds of different game engines(bevy, Amethyst, Fyrox, Godot, etc.), GUI libraries(tui, egui, iced, durid), and even WASM and frontend UI framework.
 
-This game has some level of complexity, implementing UI and event dispatching for it requires some understanding of the target framework. So, it will be something that I will try to transplant to the framework I'm learning after finish the "Hello World" of it, to consolidate my knowledge.
+This game has some level of complexity, implementing UI and event dispatching for it requires some understanding of the target framework. So, it will be something that I will try to port to the framework I'm learning after finish the "Hello World" of it, to consolidate my knowledge.
 
 For now, there is only one implementation for `tui`, but it will become more in sometime.
 
