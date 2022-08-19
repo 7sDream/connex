@@ -24,6 +24,8 @@ For now, there is only one implementation for `tui`, but it will become more in 
 
 This is a implementation for playing connex in the terminal.
 
+`cargo run -p connex-tui` to run it.
+
 Gaming:
 
 ![connex tui game page][connex-tui-game-screenshot]
